@@ -23,10 +23,46 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .dark ::-webkit-scrollbar-thumb { background: #334155; }
-    .message-content img { max-width: 100%; border-radius: 0.75rem; margin-top: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .message-content img { max-width: 100%; border-radius: 0.75rem; margin-top: 0.75rem; margin-bottom: 0.25rem; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 4px 10px -2px rgba(0,0,0,0.1); }
+    .cursor-blink::after { content: '▋'; display: inline-block; vertical-align: baseline; animation: blink 0.8s infinite; color: #0d9488; margin-right: 2px; }
+    @keyframes blink { 0%, 50% { opacity: 1; } 50.1%, 100% { opacity: 0; } }
   </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 min-h-screen flex flex-col justify-between text-slate-800 dark:text-slate-100 transition-colors duration-300">
+
+  <!-- مودال تنظیمات و پروفایل کاربر -->
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5 text-right">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <h3 class="text-lg font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-teal-500"></i> تنظیمات نمایه و یادگیری
+        </h3>
+        <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">نام یا لقب شما:</label>
+        <input type="text" id="settings-name-input" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500 text-slate-800 dark:text-slate-100 transition">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">لحن پاسخگویی دستیار:</label>
+        <select id="settings-tone-select" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:border-teal-500 text-slate-800 dark:text-slate-100 transition">
+          <option value="صمیمی و پرانرژی">دوستانه، صمیمی و پرانرژی 🌟</option>
+          <option value="معلم مهربان و راهنما">معلم دلسوز، گام‌به‌گام و راهنما 👨‍🏫</option>
+          <option value="علمی، دقیق و رسمی">علمی، دقیق و متمرکز بر نکات امتحانی 📚</option>
+        </select>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="saveSettings()" class="w-full bg-teal-500 hover:bg-teal-600 active:scale-95 text-white font-bold py-3 rounded-2xl transition shadow-md shadow-teal-500/20">
+          ذخیره تغییرات
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- مودال دریافت نام در ورود اول -->
   <div id="name-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
@@ -62,7 +98,10 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 md:gap-2">
+        <button onclick="toggleSettingsModal()" title="تنظیمات نمایه و لحن" class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 w-10 h-10 rounded-xl flex items-center justify-center transition">
+          <i class="fa-solid fa-sliders text-sm"></i>
+        </button>
         <button onclick="toggleDarkMode()" title="تغییر حالت تیره/روشن" class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 w-10 h-10 rounded-xl flex items-center justify-center transition">
           <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
         </button>
@@ -82,19 +121,28 @@
       </div>
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 shadow-xs max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2 message-content">
         <p id="welcome-msg-text" class="font-bold text-teal-800 dark:text-teal-400">سلام دوست عزیز! 👋</p>
-        من همراه و راهنمای تو در درس علوم تجربی نهم هستم. هر کجای کتاب، آزمایش‌ها یا نمونه سوالات سوالی داری بپرس تا گام به گام با هم یاد بگیریم! 🌟
+        من همراه و راهنمای تخصصی تو در درس علوم تجربی پایه نهم هستم. هر سوال درسی، فرمول، آزمایش یا نکته امتحانی داری بپرس تا با هم یاد بگیریم! 🌟
       </div>
     </div>
   </main>
 
-  <!-- نوار پیام -->
-  <footer class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 md:p-4 sticky bottom-0 z-20">
+  <!-- نوار پرسش‌های آماده و ارسال پیام -->
+  <footer class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 md:p-4 sticky bottom-0 z-20 space-y-2.5">
+    <!-- سوالات پیشنهادی فصل به فصل -->
+    <div class="max-w-4xl mx-auto flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+      <span class="text-slate-400 dark:text-slate-500 shrink-0 font-medium"><i class="fa-solid fa-lightbulb text-amber-500"></i> پرسش‌های کلیدی:</span>
+      <button onclick="quickAsk('تفاوت پیوند یونی و اشتراکی را با مثال توضیح بده')" class="bg-slate-100 hover:bg-teal-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-xl shrink-0 transition border border-slate-200 dark:border-slate-700">پیوند یونی و اشتراکی؟</button>
+      <button onclick="quickAsk('فرمول فشار در مایعات چیست و اصل پاسکال چه کاربردی دارد؟')" class="bg-slate-100 hover:bg-teal-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-xl shrink-0 transition border border-slate-200 dark:border-slate-700">فرمول فشار و اصل پاسکال؟</button>
+      <button onclick="quickAsk('قوانین سه گانه نیوتون را خیلی ساده و با مثال توضیح بده')" class="bg-slate-100 hover:bg-teal-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-xl shrink-0 transition border border-slate-200 dark:border-slate-700">سه قانون نیوتون؟</button>
+      <button onclick="quickAsk('تفاوت گیاهان بازدانه و نهاندانه همراه با مثال چیه؟')" class="bg-slate-100 hover:bg-teal-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-xl shrink-0 transition border border-slate-200 dark:border-slate-700">گیاهان بازدانه و نهاندانه؟</button>
+    </div>
+
     <div class="max-w-4xl mx-auto">
       <form id="chat-form" class="flex items-center gap-2" onsubmit="handleSendMessage(event)">
         <input 
           type="text" 
           id="user-input" 
-          placeholder="سوالت رو بپرس..." 
+          placeholder="هر سوالی از علوم نهم داری بپرس..." 
           autocomplete="off"
           class="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm md:text-base rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 transition"
         />
@@ -117,47 +165,141 @@
     const API_URL = "https://api.gapgpt.app/v1/chat/completions";
 
     let userName = localStorage.getItem('science_user_name') || '';
-    
-    // آرایه تاریخچه گفتگو برای حفظ حافظه چت
+    let assistantTone = localStorage.getItem('science_assistant_tone') || 'معلم مهربان و راهنما';
     let conversationHistory = JSON.parse(localStorage.getItem('science_chat_history')) || [];
 
-    // بانک تصاویر آموزشی علوم نهم (Wikimedia Commons معتبر)
+    // ==========================================
+    // بانک جامع تصاویر علمی ویکی‌مدیا (تأییدشده و فعال برای مباحث علوم نهم)
+    // ==========================================
     const SCIENCE_IMAGE_BANK = {
-      "فلزات": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Copper_elements.jpg/440px-Copper_elements.jpg",
-      "مس": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Copper_elements.jpg/440px-Copper_elements.jpg",
+      "مس": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Copper_wire_rod_produced_by_LS_Cable_%26_System.jpg/640px-Copper_wire_rod_produced_by_LS_Cable_%26_System.jpg",
+      "فلز": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Copper_wire_rod_produced_by_LS_Cable_%26_System.jpg/640px-Copper_wire_rod_produced_by_LS_Cable_%26_System.jpg",
+      "طلا": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Gold_nugget.jpg/640px-Gold_nugget.jpg",
       "آهن": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Iron_crystals_electrolytic_1cm3.jpg/440px-Iron_crystals_electrolytic_1cm3.jpg",
-      "سلول": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Animal_cell_structure_en.svg/600px-Animal_cell_structure_en.svg.png",
-      "هسته": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Animal_cell_structure_en.svg/600px-Animal_cell_structure_en.svg.png",
+      "گوگرد": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Sulfur-sample.jpg/640px-Sulfur-sample.jpg",
+      "فسفر": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Phosphorus-red.jpg/640px-Phosphorus-red.jpg",
+      "پلاستیک": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Polyethylene_balls.jpg/640px-Polyethylene_balls.jpg",
+      "پلیمر": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Polyethylene_balls.jpg/640px-Polyethylene_balls.jpg",
+      "بازیافت": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/PET-bottle-recycling.jpg/640px-PET-bottle-recycling.jpg",
+      "پیوند یونی": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Ionic_bonding.svg/640px-Ionic_bonding.svg.png",
+      "پیوند اشتراکی": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Covalent_bond_hydrogen.svg/640px-Covalent_bond_hydrogen.svg.png",
+      "کووالانسی": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Covalent_bond_hydrogen.svg/640px-Covalent_bond_hydrogen.svg.png",
+      "آب": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Water_molecule.svg/640px-Water_molecule.svg.png",
+      "نمک": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Sodium_chloride_crystal_3D_axes.png/640px-Sodium_chloride_crystal_3D_axes.png",
+      "متان": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Methane-3D-space-filling.svg/640px-Methane-3D-space-filling.svg.png",
+      "چرخه کربن": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Carbon_cycle-cute_diagram.svg/640px-Carbon_cycle-cute_diagram.svg.png",
+      "نفت": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Petroleum.JPG/640px-Petroleum.JPG",
+      "شتاب": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Velocity_vs_time_graph.svg/500px-Velocity_vs_time_graph.svg.png",
+      "تندی": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Speedometer_140kmh.jpg/640px-Speedometer_140kmh.jpg",
+      "سرعت": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Distance-time_graph.svg/640px-Distance-time_graph.svg.png",
+      "نیوتون": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Newton_cradle.gif/400px-Newton_cradle.gif",
+      "نیرو": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Newton_cradle.gif/400px-Newton_cradle.gif",
+      "اصطکاک": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Newton_cradle.gif/400px-Newton_cradle.gif",
+      "زمین‌ساخت": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Plate_tectonics_map.svg/640px-Plate_tectonics_map.svg.png",
+      "گسل": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Plate_tectonics_map.svg/640px-Plate_tectonics_map.svg.png",
+      "فسیل": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Ammonite_fossil.jpg/640px-Ammonite_fossil.jpg",
+      "سنگواره": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Ammonite_fossil.jpg/640px-Ammonite_fossil.jpg",
+      "فشار": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Hydraulic_press.svg/500px-Hydraulic_press.svg.png",
+      "پاسکال": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Hydraulic_press.svg/500px-Hydraulic_press.svg.png",
+      "بارومتر": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Mercury_barometer.jpg/640px-Mercury_barometer.jpg",
+      "ماشین": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Levers_first_second_and_third_class.svg/640px-Levers_first_second_and_third_class.svg.png",
+      "اهرم": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Levers_first_second_and_third_class.svg/640px-Levers_first_second_and_third_class.svg.png",
+      "قرقره": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Pulley1.svg/640px-Pulley1.svg.png",
       "منظومه شمسی": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Planets2008.jpg/800px-Planets2008.jpg",
       "سیاره": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Planets2008.jpg/800px-Planets2008.jpg",
-      "فسیل": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Trilobite_fossil_01.jpg/500px-Trilobite_fossil_01.jpg",
-      "فشار": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Hydraulic_press.svg/500px-Hydraulic_press.svg.png",
-      "شتاب": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Velocity_vs_time_graph.svg/500px-Velocity_vs_time_graph.svg.png",
-      "نیوتون": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Newton_cradle.gif/400px-Newton_cradle.gif",
+      "خورشید": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/640px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg",
+      "ماه": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/FullMoon2010.jpg/640px-FullMoon2010.jpg",
+      "سلول": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Animal_cell_structure_en.svg/600px-Animal_cell_structure_en.svg.png",
+      "هسته": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Animal_cell_structure_en.svg/600px-Animal_cell_structure_en.svg.png",
+      "گیاه": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Plant_cell_structure_svg.svg/640px-Plant_cell_structure_svg.svg.png",
+      "خزه": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Moss_on_rock.jpg/640px-Moss_on_rock.jpg",
+      "سرخس": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Fern_frond_with_sori.jpg/640px-Fern_frond_with_sori.jpg",
+      "کاج": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Pine_cone_female.jpg/640px-Pine_cone_female.jpg",
+      "اسفنج": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Aplysina_aerophoba.jpg/640px-Aplysina_aerophoba.jpg",
+      "مرجان": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Coral_Outcrop_Flynn_Reef.jpg/640px-Coral_Outcrop_Flynn_Reef.jpg",
+      "عروس دریایی": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Jelly_cck.jpg/640px-Jelly_cck.jpg",
+      "حلزون": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Cornu_aspersum_1.jpg/640px-Cornu_aspersum_1.jpg",
+      "بندپایان": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/European_honey_bee_extracts_nectar.jpg/640px-European_honey_bee_extracts_nectar.jpg",
+      "حشره": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/European_honey_bee_extracts_nectar.jpg/640px-European_honey_bee_extracts_nectar.jpg",
+      "مهره‌دار": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Green_Tree_Frog_with_water_droplets.jpg/640px-Green_Tree_Frog_with_water_droplets.jpg",
+      "قورباغه": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Green_Tree_Frog_with_water_droplets.jpg/640px-Green_Tree_Frog_with_water_droplets.jpg",
+      "خزنده": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Chamaeleo_chamaeleon_2.jpg/640px-Chamaeleo_chamaeleon_2.jpg",
+      "پرنده": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/House_sparrow04.jpg/640px-House_sparrow04.jpg",
+      "پستاندار": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Lion_waiting_in_Namibia.jpg/640px-Lion_waiting_in_Namibia.jpg",
+      "اکوسیستم": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Temperate_rainforest.jpg/640px-Temperate_rainforest.jpg",
+      "زنجیره غذایی": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Food_web.svg/640px-Food_web.svg.png",
       "اسید": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/PH_scale.svg/600px-PH_scale.svg.png",
       "باز": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/PH_scale.svg/600px-PH_scale.svg.png",
       "DNA": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/DNA_Simple.svg/400px-DNA_Simple.svg.png",
       "ژن": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/DNA_Simple.svg/400px-DNA_Simple.svg.png"
     };
 
-    // محتوای جامع ۱۵ فصل علوم نهم
+    // ==========================================
+    // محتوای جامع ۱۵ فصل علوم پایه نهم
+    // ==========================================
     const SCIENCE_KNOWLEDGE_BASE = `
-تو دستیار هوشمند و تخصصی «علوم تجربی پایه نهم» هستید. شامل ۱۵ فصل کتاب درسی:
-فصل ۱: مواد و نقش آن‌ها در زندگی (تفاوت فلزات و نافلزات، مس، آهن، طلا، گوگرد، واکنش‌پذیری فلزات، پیوندها).
-فصل ۲: رفتار اتم‌ها با یکدیگر (پیوند یونی، پیوند کووالانسی، مولکول‌ها، یون‌ها).
-فصل ۳: به دنبال مواد بهتر (پلیمرها، الیاف مصنوعی، پلاستیک‌ها، بازیافت).
-فصل ۴: حرکت چه زیباست! (مسافت، جابجایی، تندی متوسط، تندی لحظه‌ای، سرعت، شتاب).
-فصل ۵: نیرو (قوانین نیوتون، اینرسی، اصطکاک، نیروی گرانش، وزن).
-فصل ۶: فشار و آثار آن (فشار در جامدات، فشار در مایعات، اصل پاسکال، فشار هوا، بارومتر).
-فصل ۷: ورق پاره‌های زمین (ساختار درونی زمین، زمین‌ساخت ورقه‌ای، زلزله، آتشفشان).
-فصل ۸: سامانه خورشیدی (سیارات درونی و بیرونی، شهاب‌سنگ‌ها، ستاره‌ها، کهکشان‌ها).
-فصل ۹: با هم زیستن (بوم‌سازگان، زنجیره غذایی، شبکه غذایی، رقابت و همزیستی).
-فصل ۱۰: نگاهی به فضا (تلسکوپ‌ها، سال نوری، طیف نور ستاره‌ها).
-فصل ۱۱: گوناگون جانداران (طبقه‌بندی جانداران، باکتری‌ها، آغازیان، قارچ‌ها، گیاهان، جانوران).
-فصل ۱۲: دنیای درون سلول (ساختار سلول گیاهی و جانوری، غشاء، هسته، سیتوپلاسم، دیواره سلولی).
-فصل ۱۳: از سلول تا ارگانیسم (بافت‌های بدن، اندام‌ها، دستگاه‌های بدن).
-فصل ۱۴: جانوران مهره‌دار (ماهیان، دوزیستان، خزندگان، پرندگان، پستانداران).
-فصل ۱۵: با هم، برای زیستن (حفظ محیط زیست، انرژی‌های تجدیدپذیر، پایداری زمین).
+[فصل ۱: مواد و نقش آن‌ها در زندگی]
+- مواد خالص و ناخالص: فلزات مانند مس (Cu)، طلا (Au)، آهن (Fe) و آلومینیوم (Al) رسانای الکتریسیته و گرما بوده، چکش‌خوار و براق هستند.
+- نافلزات: گوگرد (S)، اکسیژن، کلر، کربن. شبه‌فلزات مانند سیلیسیم (Si) در صنایع نیمه‌رسانا و الکترونیک کاربرد دارند.
+- پلیمرها: بسپارهای طبیعی (نشاسته، سلولز، پشم، ابریشم) و مصنوعی (پلی‌اتیلن، نایلون).
+
+[فصل ۲: رفتار اتم‌ها با یکدیگر]
+- پیوند یونی: جاذبه بار مثبت (کاتیون) و منفی (آنیون). ترکیب بارز: سدیم کلرید (NaCl). رسانایی در حالت مذاب یا محلول.
+- پیوند کووالانسی (اشتراکی): اشتراک الکترون بین نافلزها مانند آب (H2O)، متان (CH4) و کربن دی‌اکسید (CO2). فاقد رسانایی الکتریکی در آب.
+
+[فصل ۳: به دنبال محیطی بهتر برای زندگی]
+- هواکره و لایه‌ها: تروپوسفر، استراتوسفر حاوی ازن (O3). چرخه کربن و اثر گلخانه‌ای با گازهای CO2 و متان.
+- بازیافت، نفت خام و فرآیند تقطیر جز‌به‌جز در پالایشگاه‌ها.
+
+[فصل ۴: حرکت چیست؟]
+- مسافت (کمیت نرده‌ای) و جابه‌جایی (کمیت برداری مستقیم از مبدا به مقصد).
+- تندی متوسط (مسافت بر زمان) و سرعت متوسط (جابه‌جایی بر زمان). یکای استاندارد: متر بر ثانیه (m/s).
+- شتاب: نسبت تغییرات سرعت به زمان (a = Δv / t). شتاب تندشونده و کندشونده.
+
+[فصل ۵: نیرو]
+- قانون اول نیوتن (لختی/اینرسی): حفظ وضعیت سکون یا سرعت ثابت بدون نیروی خالص.
+- قانون دوم نیوتن: F = m · a (رابطه مستقیم شتاب با نیرو و عکس با جرم).
+- قانون سوم نیوتن (کنش و واکنش): هر عملی واکنشی برابر و هم‌راستا اما خلاف جهت دارد.
+- نیروی گرانش و وزن: W = m · g (شتاب گرانش زمین حدود ۹.۸ یا ۱۰ نیوتن بر کیلوگرم).
+
+[فصل ۶: زمین‌ساخت ورقه‌ای]
+- لایه‌های زمین: پوسته، گوشته (نرم‌کره نیمه‌مذاب) و هسته (مایع بیرونی و جامد درونی).
+- حرکت ورقه‌های سنگ‌کره روی سست‌کره در سه مرز: واگرا (پشته‌های اقیانوسی)، همگرا (کوه‌زایی و گودال‌ها)، امتدادلغز (ایجاد زلزله و گسل).
+
+[فصل ۷: آثاری از گذشته زمین]
+- فسیل: بقایای سخت جانداران که سریع در رسوبات دور از اکسیژن دفن شده‌اند.
+- فسیل‌های راهنما و تعیین سن نسبی لایه‌ها بر پایه اصل برهم‌نهش رسوبی.
+
+[فصل ۸: فشار و آثار آن]
+- تعریف فشار: P = F / A (یکای پاسکال Pa = N/m²).
+- فشار مایعات: P = ρ · g · h وابسته به عمق و چگالی مایع. اصل پاسکال: انتقال یکپارچه فشار در مایع محبوس (جک هیدرولیک).
+- فشار گازها و آزمایش بارومتر توریچلی (۷۶ سانتی‌متر ستون جیوه).
+
+[فصل ۹: ماشین‌ها]
+- مزیت مکانیکی: نسبت نیروی مقاوم به محرک (MA = Fr / Fe). ماشین کار را بیشتر نمی‌کند، بلکه انجام آن را آسان‌تر می‌کند.
+- اهرم‌ها (سه حالت تکیه‌گاه)، قرقره‌ها (ثابت و متحرک)، سطح شیب‌دار، پیچ و چرخ و محور.
+
+[فصل ۱۰: نگاهی به فضا]
+- منظومه شمسی: خورشید، سیارات سنگی درونی (عطارد، زهره، زمین، مریخ) و سیارات گازی بیرونی (مشتری، زحل، اورانوس، نپتون).
+- شهاب‌سنگ‌ها، ستاره‌ها، سال نوری و تلسکوپ‌های فضایی.
+
+[فصل ۱۱: گوناگونی جانوران]
+- رده‌بندی سیستماتیک: پروکاریوت‌ها (باکتری‌ها) و یوکاریوت‌ها (آغازیان، قارچ‌ها، گیاهان، جانوران).
+- هتروتروف‌ها و اتوتروف‌ها.
+
+[فصل ۱۲: دنیای گیاهان]
+- فتوسنتز: کلروفیل، نور، آب و CO2 برای تولید گلوکز و اکسیژن.
+- گیاهان بدون آوند (خزه‌ها) و گیاهان آونددار (سرخس‌ها، بازدانگان مخروطی مانند کاج و نهاندانگان گل‌دار).
+
+[فصل ۱۳: جانوران بی‌مهره]
+- اسفنج‌ها، کیسه‌تنان (مرجان‌ها و شقایق دریایی)، کرم‌ها، نرم‌تنان، بندپایان (بزرگ‌ترین شاخه شامل حشرات و عنکبوتیان)، خارپوستان.
+
+[فصل ۱۴: جانوران مهره‌دار]
+- ماهی‌ها (قلب ۲ حفره‌ای)، دوزیستان (قلب ۳ حفره‌ای)، خزندگان (خونسرد با تخم پوست‌دار)، پرندگان (خونگرم و استخوان توخالی)، پستانداران (زنده‌زا با شیردهی).
+
+[فصل ۱۵: با هم زیستن]
+- بوم‌سازگان (اکوسیستم): زنجیره و شبکه غذایی، هرم انرژی.
+- روابط زیستی: همیاری (+/+)، همسفره‌گری (+/0)، صیادی و انگل‌داری (+/-).
 `;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -172,7 +314,6 @@
         document.getElementById('theme-icon').className = "fa-solid fa-sun text-sm";
       }
 
-      // بارگذاری تاریخچه قبلی در UI
       renderExistingHistory();
     });
 
@@ -187,13 +328,37 @@
       localStorage.setItem('science_user_name', userName);
       document.getElementById('name-modal').classList.add('hidden');
       updateGreeting();
-      
-      appendMessage('assistant', `سلام ${userName} عزیز! خوش اومدی. از درس علوم نهم هر سوالی داری بپرس تا کمکت کنم. 🌟`);
+      appendMessage('assistant', `سلام ${userName} عزیز! خوش اومدی. هر کجای کتاب علوم نهم سوال داری مطرح کن تا بررسی کنیم. 🌟`);
+    }
+
+    function toggleSettingsModal() {
+      const modal = document.getElementById('settings-modal');
+      const isHidden = modal.classList.contains('hidden');
+      if (isHidden) {
+        document.getElementById('settings-name-input').value = userName || '';
+        document.getElementById('settings-tone-select').value = assistantTone;
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function saveSettings() {
+      const nameInput = document.getElementById('settings-name-input').value.trim();
+      const toneInput = document.getElementById('settings-tone-select').value;
+      if (nameInput) {
+        userName = nameInput;
+        localStorage.setItem('science_user_name', userName);
+      }
+      assistantTone = toneInput;
+      localStorage.setItem('science_assistant_tone', assistantTone);
+      updateGreeting();
+      toggleSettingsModal();
     }
 
     function updateGreeting() {
       if (userName) {
-        document.getElementById('user-greeting-sub').textContent = `سلام ${userName} عزیز! آماده یادگیری؟`;
+        document.getElementById('user-greeting-sub').textContent = `سلام ${userName} عزیز! (${assistantTone})`;
         const welcomeText = document.getElementById('welcome-msg-text');
         if (welcomeText) {
           welcomeText.textContent = `سلام ${userName} عزیز! 👋`;
@@ -216,14 +381,8 @@
     }
 
     function renderExistingHistory() {
-      const container = document.getElementById('chat-container');
-      // اگر تاریخچه وجود دارد، پیام اولیه پیش‌فرض را نگه دار و پیام‌های قبلی را اضافه کن
       conversationHistory.forEach(msg => {
-        if (msg.role === 'user') {
-          appendMessageUI('user', msg.content);
-        } else if (msg.role === 'assistant') {
-          appendMessageUI('assistant', msg.content);
-        }
+        appendMessageUI(msg.role, msg.content, msg.image || null);
       });
       scrollToBottom();
     }
@@ -243,7 +402,7 @@
         ? 'bg-teal-600 text-white rounded-2xl rounded-tl-none'
         : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none shadow-xs';
 
-      let imageHtml = imageUrl ? `<img src="${imageUrl}" alt="تصویر آموزشی علوم نهم" loading="lazy">` : '';
+      let imageHtml = imageUrl ? `<div class="mt-2"><img src="${imageUrl}" alt="تصویر مفهومی علوم نهم" loading="lazy" class="w-full max-h-72 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"></div>` : '';
 
       wrapper.innerHTML = `
         ${avatar}
@@ -254,12 +413,12 @@
       `;
       container.appendChild(wrapper);
       scrollToBottom();
+      return wrapper;
     }
 
     function appendMessage(sender, text, imageUrl = null) {
       appendMessageUI(sender, text, imageUrl);
-      // ذخیره در تاریخچه آرایه
-      conversationHistory.push({ role: sender, content: text });
+      conversationHistory.push({ role: sender, content: text, image: imageUrl });
       localStorage.setItem('science_chat_history', JSON.stringify(conversationHistory));
     }
 
@@ -275,7 +434,7 @@
             </div>
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 shadow-xs max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2 message-content">
               <p id="welcome-msg-text" class="font-bold text-teal-800 dark:text-teal-400">سلام ${userName || 'دوست'} عزیز! 👋</p>
-              من همراه و راهنمای تو در درس علوم تجربی نهم هستم. هر کجای کتاب، آزمایش‌ها یا نمونه سوالات سوالی داری بپرس تا گام به گام با هم یاد بگیریم! 🌟
+              من همراه و راهنمای تخصصی تو در درس علوم تجربی پایه نهم هستم. هر سوال درسی، فرمول، آزمایش یا نکته امتحانی داری بپرس تا با هم یاد بگیریم! 🌟
             </div>
           </div>
         `;
@@ -291,6 +450,69 @@
       return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+    function quickAsk(questionText) {
+      const input = document.getElementById('user-input');
+      input.value = questionText;
+      document.getElementById('chat-form').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+
+    // تشخیص دقیق تصویر از روی پرسش کاربر یا پاسخ آماده شده
+    function findRelevantImage(query, responseText) {
+      const combinedText = (query + " " + responseText).toLowerCase();
+      for (const [keyword, url] of Object.entries(SCIENCE_IMAGE_BANK)) {
+        if (combinedText.includes(keyword.toLowerCase())) {
+          return url;
+        }
+      }
+      return null;
+    }
+
+    // افکت تایپ فوق‌سریع بدون کُند کردن پاسخ کاربر
+    function typeAssistantResponse(fullText, imageUrl) {
+      const container = document.getElementById('chat-container');
+      const wrapper = document.createElement('div');
+      wrapper.className = `flex items-start gap-3`;
+      
+      const avatar = `<div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1"><i class="fa-solid fa-graduation-cap"></i></div>`;
+      const bubble = document.createElement('div');
+      bubble.className = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 shadow-xs max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2 message-content';
+      
+      const textP = document.createElement('p');
+      textP.className = 'whitespace-pre-wrap cursor-blink';
+      bubble.appendChild(textP);
+      wrapper.innerHTML = avatar;
+      wrapper.appendChild(bubble);
+      container.appendChild(wrapper);
+      scrollToBottom();
+
+      let index = 0;
+      const step = Math.max(2, Math.floor(fullText.length / 50)); // تقسیم بر گام‌های سریع تا در کمتر از ۱.۵ ثانیه تمام شود
+      const timer = setInterval(() => {
+        index += step;
+        if (index >= fullText.length) {
+          index = fullText.length;
+          textP.textContent = fullText;
+          textP.classList.remove('cursor-blink');
+          clearInterval(timer);
+
+          if (imageUrl) {
+            const imgBox = document.createElement('div');
+            imgBox.className = 'mt-2';
+            imgBox.innerHTML = `<img src="${imageUrl}" alt="تصویر علمی مرتبط" loading="lazy" class="w-full max-h-72 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">`;
+            bubble.appendChild(imgBox);
+          }
+          scrollToBottom();
+
+          // ذخیره در تاریخچه
+          conversationHistory.push({ role: 'assistant', content: fullText, image: imageUrl });
+          localStorage.setItem('science_chat_history', JSON.stringify(conversationHistory));
+        } else {
+          textP.textContent = fullText.substring(0, index);
+          scrollToBottom();
+        }
+      }, 20);
+    }
+
     async function handleSendMessage(e) {
       e.preventDefault();
       const input = document.getElementById('user-input');
@@ -300,7 +522,7 @@
       input.value = '';
       appendMessage('user', query);
 
-      // ساخت باکس لودینگ
+      // لودینگ
       const container = document.getElementById('chat-container');
       const loadingId = 'loading-' + Date.now();
       const loadingWrapper = document.createElement('div');
@@ -312,29 +534,29 @@
         </div>
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl rounded-tr-none p-4 shadow-xs text-sm flex items-center gap-2">
           <i class="fa-solid fa-spinner fa-spin text-teal-500"></i>
-          <span>در حال بررسی و آماده‌سازی پاسخ... ⏳</span>
+          <span>در حال بررسی و نگارش پاسخ... ⏳</span>
         </div>
       `;
       container.appendChild(loadingWrapper);
       scrollToBottom();
 
-      // چک کردن تطابق عکس با کلیدواژه‌ها
-      let matchedImage = null;
-      for (const [keyword, imgUrl] of Object.entries(SCIENCE_IMAGE_BANK)) {
-        if (query.includes(keyword)) {
-          matchedImage = imgUrl;
-          break;
-        }
-      }
-
       try {
-        // ارسال کل تاریخچه گفتگو به همراه پرامپت سیستم و پیام جدید
+        const systemPrompt = `تو دستیار تخصصی «علوم تجربی پایه نهم» به نام «لذت یادگیری» هستی.
+نام دانش‌آموز: ${userName || 'دانش‌آموز عزیز'}.
+لحن تعیین‌شده برای تو: ${assistantTone}.
+
+قوانین سفت و سخت رفتاری:
+۱. فقط و فقط به سوالات، مباحث، تعاریف، فرمول‌ها و نکات آزمایشگاهی کتاب علوم تجربی نهم پاسخ بده.
+۲. اگر کاربر سوالی غیرمرتبط با علوم تجربی و مدرسه پرسید (سیاسی، ورزشی، سرگرمی نامرتبط، کدنویسی، مسائل متفرقه)، مودبانه بگو: «من دستیار اختصاصی درس علوم نهم هستم و فقط می‌تونم در زمینه مباحث این کتاب بهت کمک کنم. لطفاً یک سوال از علوم نهم بپرس!»
+۳. تمام پاسخ‌ها باید کاملاً دقیق، مستند به کتاب درسی نهم، واضح و با لحن '${assistantTone}' باشد.
+
+گنجینه محتوای ۱۵ فصل کتاب علوم نهم:
+${SCIENCE_KNOWLEDGE_BASE}
+`;
+
         const messagesPayload = [
-          {
-            role: "system",
-            content: `نام کاربر: ${userName || 'دانش‌آموز'}.\n${SCIENCE_KNOWLEDGE_BASE}\nلطفاً پاسخ‌ها را دقیق، علمی، روان و متناسب با کتاب علوم تجربی نهم با لحنی دوستانه و آموزشی ارائه بده.`
-          },
-          ...conversationHistory.slice(-12) // ارسال آخرین ۱۲ پیام برای حفظ context و عدم تجاوز از توکن‌ها
+          { role: "system", content: systemPrompt },
+          ...conversationHistory.slice(-10).map(m => ({ role: m.role, content: m.content }))
         ];
 
         const response = await fetch(API_URL, {
@@ -346,7 +568,7 @@
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: messagesPayload,
-            temperature: 0.5
+            temperature: 0.4
           })
         });
 
@@ -355,13 +577,14 @@
 
         if (data.choices && data.choices[0] && data.choices[0].message) {
           const botReply = data.choices[0].message.content;
-          appendMessage('assistant', botReply, matchedImage);
+          const matchedImage = findRelevantImage(query, botReply);
+          typeAssistantResponse(botReply, matchedImage);
         } else {
-          appendMessage('assistant', 'پاسخی از سرور دریافت نشد. لطفاً دوباره تلاش کنید.');
+          appendMessage('assistant', 'متأسفانه پاسخی دریافت نشد. لطفاً مجدد امتحان کنید.');
         }
       } catch (err) {
         document.getElementById(loadingId)?.remove();
-        appendMessage('assistant', 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.');
+        appendMessage('assistant', 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را چک کنید.');
       }
     }
   </script>
