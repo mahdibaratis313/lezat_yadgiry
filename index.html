@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>لذت یادگیری | دستیار هوشمند علوم نهم</title>
-  <!-- رفع خطای فاوآیکون -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2228%22>📚</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script>
@@ -25,12 +23,13 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .dark ::-webkit-scrollbar-thumb { background: #334155; }
+    .message-content img { max-width: 100%; border-radius: 0.75rem; margin-top: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
   </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 min-h-screen flex flex-col justify-between text-slate-800 dark:text-slate-100 transition-colors duration-300">
 
   <!-- مودال دریافت نام در ورود اول -->
-  <div id="name-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="name-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-4">
       <div class="w-16 h-16 rounded-2xl bg-teal-500 text-white flex items-center justify-center text-2xl mx-auto shadow-lg shadow-teal-500/30">
         <i class="fa-solid fa-graduation-cap"></i>
@@ -76,11 +75,12 @@
 
   <!-- چت -->
   <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl w-full mx-auto">
+    <!-- پیام خوش‌آمد اولیه پیش‌فرض -->
     <div class="flex items-start gap-3">
       <div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1">
         <i class="fa-solid fa-graduation-cap"></i>
       </div>
-      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 shadow-xs max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 shadow-xs max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2 message-content">
         <p id="welcome-msg-text" class="font-bold text-teal-800 dark:text-teal-400">سلام دوست عزیز! 👋</p>
         من همراه و راهنمای تو در درس علوم تجربی نهم هستم. هر کجای کتاب، آزمایش‌ها یا نمونه سوالات سوالی داری بپرس تا گام به گام با هم یاد بگیریم! 🌟
       </div>
@@ -90,7 +90,7 @@
   <!-- نوار پیام -->
   <footer class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 md:p-4 sticky bottom-0 z-20">
     <div class="max-w-4xl mx-auto">
-      <form id="chat-form" class="flex items-center gap-2">
+      <form id="chat-form" class="flex items-center gap-2" onsubmit="handleSendMessage(event)">
         <input 
           type="text" 
           id="user-input" 
@@ -100,51 +100,105 @@
         />
         <button 
           type="submit" 
-          id="send-btn" 
-          class="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition shadow-md shadow-teal-500/20 disabled:opacity-50"
+          id="send-btn"
+          class="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white w-12 h-12 rounded-2xl flex items-center justify-center transition shadow-md shadow-teal-500/20 shrink-0"
         >
-          <i class="fa-solid fa-paper-plane -rotate-90 text-sm"></i>
+          <i class="fa-solid fa-paper-plane text-sm"></i>
         </button>
       </form>
-      <p class="text-center text-[11px] text-slate-400 mt-2">لذت یادگیری | همراه هوشمند علوم تجربی نهم 🚀</p>
     </div>
   </footer>
 
-  <!-- بارگذاری فایل دانش -->
-  <script src="./knowledge.js"></script>
-
   <script>
     // ==========================================
-    // تنظیم کلید و آدرس API
+    // تنظیمات API و کلید
     // ==========================================
-    const API_KEY = "sk-ORnuiKkMVnFMY3wMQ3rKwTEhKGsvE3jQbYL8afOepMojgnfN"; // کلید اختصاصی خود را اینجا بگذارید
+    const API_KEY = "sk-ORnuiKkMVnFMY3wMQ3rKwTEhKGsvE3jQbYL8afOepMojgnfN";
     const API_URL = "https://api.gapgpt.app/v1/chat/completions";
 
     let userName = localStorage.getItem('science_user_name') || '';
+    
+    // آرایه تاریخچه گفتگو برای حفظ حافظه چت
+    let conversationHistory = JSON.parse(localStorage.getItem('science_chat_history')) || [];
 
-    window.addEventListener('DOMContentLoaded', () => {
-      if (userName) {
-        document.getElementById('name-modal').classList.add('hidden');
+    // بانک تصاویر آموزشی علوم نهم (Wikimedia Commons معتبر)
+    const SCIENCE_IMAGE_BANK = {
+      "فلزات": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Copper_elements.jpg/440px-Copper_elements.jpg",
+      "مس": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Copper_elements.jpg/440px-Copper_elements.jpg",
+      "آهن": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Iron_crystals_electrolytic_1cm3.jpg/440px-Iron_crystals_electrolytic_1cm3.jpg",
+      "سلول": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Animal_cell_structure_en.svg/600px-Animal_cell_structure_en.svg.png",
+      "هسته": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Animal_cell_structure_en.svg/600px-Animal_cell_structure_en.svg.png",
+      "منظومه شمسی": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Planets2008.jpg/800px-Planets2008.jpg",
+      "سیاره": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Planets2008.jpg/800px-Planets2008.jpg",
+      "فسیل": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Trilobite_fossil_01.jpg/500px-Trilobite_fossil_01.jpg",
+      "فشار": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Hydraulic_press.svg/500px-Hydraulic_press.svg.png",
+      "شتاب": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Velocity_vs_time_graph.svg/500px-Velocity_vs_time_graph.svg.png",
+      "نیوتون": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Newton_cradle.gif/400px-Newton_cradle.gif",
+      "اسید": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/PH_scale.svg/600px-PH_scale.svg.png",
+      "باز": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/PH_scale.svg/600px-PH_scale.svg.png",
+      "DNA": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/DNA_Simple.svg/400px-DNA_Simple.svg.png",
+      "ژن": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/DNA_Simple.svg/400px-DNA_Simple.svg.png"
+    };
+
+    // محتوای جامع ۱۵ فصل علوم نهم
+    const SCIENCE_KNOWLEDGE_BASE = `
+تو دستیار هوشمند و تخصصی «علوم تجربی پایه نهم» هستید. شامل ۱۵ فصل کتاب درسی:
+فصل ۱: مواد و نقش آن‌ها در زندگی (تفاوت فلزات و نافلزات، مس، آهن، طلا، گوگرد، واکنش‌پذیری فلزات، پیوندها).
+فصل ۲: رفتار اتم‌ها با یکدیگر (پیوند یونی، پیوند کووالانسی، مولکول‌ها، یون‌ها).
+فصل ۳: به دنبال مواد بهتر (پلیمرها، الیاف مصنوعی، پلاستیک‌ها، بازیافت).
+فصل ۴: حرکت چه زیباست! (مسافت، جابجایی، تندی متوسط، تندی لحظه‌ای، سرعت، شتاب).
+فصل ۵: نیرو (قوانین نیوتون، اینرسی، اصطکاک، نیروی گرانش، وزن).
+فصل ۶: فشار و آثار آن (فشار در جامدات، فشار در مایعات، اصل پاسکال، فشار هوا، بارومتر).
+فصل ۷: ورق پاره‌های زمین (ساختار درونی زمین، زمین‌ساخت ورقه‌ای، زلزله، آتشفشان).
+فصل ۸: سامانه خورشیدی (سیارات درونی و بیرونی، شهاب‌سنگ‌ها، ستاره‌ها، کهکشان‌ها).
+فصل ۹: با هم زیستن (بوم‌سازگان، زنجیره غذایی، شبکه غذایی، رقابت و همزیستی).
+فصل ۱۰: نگاهی به فضا (تلسکوپ‌ها، سال نوری، طیف نور ستاره‌ها).
+فصل ۱۱: گوناگون جانداران (طبقه‌بندی جانداران، باکتری‌ها، آغازیان، قارچ‌ها، گیاهان، جانوران).
+فصل ۱۲: دنیای درون سلول (ساختار سلول گیاهی و جانوری، غشاء، هسته، سیتوپلاسم، دیواره سلولی).
+فصل ۱۳: از سلول تا ارگانیسم (بافت‌های بدن، اندام‌ها، دستگاه‌های بدن).
+فصل ۱۴: جانوران مهره‌دار (ماهیان، دوزیستان، خزندگان، پرندگان، پستانداران).
+فصل ۱۵: با هم، برای زیستن (حفظ محیط زیست، انرژی‌های تجدیدپذیر، پایداری زمین).
+`;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!userName) {
+        document.getElementById('name-modal').classList.remove('hidden');
+      } else {
         updateGreeting();
       }
+
       if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.classList.add('dark');
-        document.getElementById('theme-icon').className = 'fa-solid fa-sun text-sm';
+        document.getElementById('theme-icon').className = "fa-solid fa-sun text-sm";
       }
+
+      // بارگذاری تاریخچه قبلی در UI
+      renderExistingHistory();
     });
 
     function saveUsername() {
-      const input = document.getElementById('username-input').value.trim();
-      if (!input) return;
-      userName = input;
+      const input = document.getElementById('username-input');
+      const nameVal = input.value.trim();
+      if (!nameVal) {
+        input.classList.add('border-red-500');
+        return;
+      }
+      userName = nameVal;
       localStorage.setItem('science_user_name', userName);
       document.getElementById('name-modal').classList.add('hidden');
       updateGreeting();
-      appendMessage('bot', `سلام ${userName} عزیز! خیلی خوش اومدی. از کدوم درس شروع کنیم؟`);
+      
+      appendMessage('assistant', `سلام ${userName} عزیز! خوش اومدی. از درس علوم نهم هر سوالی داری بپرس تا کمکت کنم. 🌟`);
     }
 
     function updateGreeting() {
-      document.getElementById('user-greeting-sub').textContent = `سلام ${userName} عزیز`;
+      if (userName) {
+        document.getElementById('user-greeting-sub').textContent = `سلام ${userName} عزیز! آماده یادگیری؟`;
+        const welcomeText = document.getElementById('welcome-msg-text');
+        if (welcomeText) {
+          welcomeText.textContent = `سلام ${userName} عزیز! 👋`;
+        }
+      }
     }
 
     function toggleDarkMode() {
@@ -153,82 +207,136 @@
       if (html.classList.contains('dark')) {
         html.classList.remove('dark');
         localStorage.setItem('theme', 'light');
-        icon.className = 'fa-solid fa-moon text-sm';
+        icon.className = "fa-solid fa-moon text-sm";
       } else {
         html.classList.add('dark');
         localStorage.setItem('theme', 'dark');
-        icon.className = 'fa-solid fa-sun text-sm';
+        icon.className = "fa-solid fa-sun text-sm";
       }
     }
 
-    const chatContainer = document.getElementById('chat-container');
-    const chatForm = document.getElementById('chat-form');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
+    function renderExistingHistory() {
+      const container = document.getElementById('chat-container');
+      // اگر تاریخچه وجود دارد، پیام اولیه پیش‌فرض را نگه دار و پیام‌های قبلی را اضافه کن
+      conversationHistory.forEach(msg => {
+        if (msg.role === 'user') {
+          appendMessageUI('user', msg.content);
+        } else if (msg.role === 'assistant') {
+          appendMessageUI('assistant', msg.content);
+        }
+      });
+      scrollToBottom();
+    }
+
+    function appendMessageUI(sender, text, imageUrl = null) {
+      const container = document.getElementById('chat-container');
+      const isUser = sender === 'user';
+      
+      const wrapper = document.createElement('div');
+      wrapper.className = `flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`;
+
+      let avatar = isUser 
+        ? `<div class="w-9 h-9 rounded-xl bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1"><i class="fa-solid fa-user"></i></div>`
+        : `<div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1"><i class="fa-solid fa-graduation-cap"></i></div>`;
+
+      let bubbleClass = isUser
+        ? 'bg-teal-600 text-white rounded-2xl rounded-tl-none'
+        : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none shadow-xs';
+
+      let imageHtml = imageUrl ? `<img src="${imageUrl}" alt="تصویر آموزشی علوم نهم" loading="lazy">` : '';
+
+      wrapper.innerHTML = `
+        ${avatar}
+        <div class="${bubbleClass} p-4 max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2 message-content">
+          <p class="whitespace-pre-wrap">${escapeHtml(text)}</p>
+          ${imageHtml}
+        </div>
+      `;
+      container.appendChild(wrapper);
+      scrollToBottom();
+    }
 
     function appendMessage(sender, text, imageUrl = null) {
-      const wrapper = document.createElement('div');
-      wrapper.className = sender === 'user' ? 'flex justify-end' : 'flex items-start gap-3';
-
-      const contentBox = document.createElement('div');
-      contentBox.className = sender === 'user'
-        ? 'bg-teal-600 text-white rounded-2xl rounded-tl-none p-3.5 max-w-[85%] md:max-w-lg text-sm leading-relaxed shadow-sm whitespace-pre-wrap'
-        : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 max-w-[85%] md:max-w-lg text-sm leading-relaxed shadow-xs whitespace-pre-wrap space-y-3';
-
-      const textNode = document.createElement('div');
-      textNode.textContent = text;
-      contentBox.appendChild(textNode);
-
-      if (imageUrl) {
-        const imgWrapper = document.createElement('div');
-        imgWrapper.className = 'rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 mt-2 bg-slate-100 dark:bg-slate-950';
-        imgWrapper.innerHTML = `<img src="${imageUrl}" alt="تصویر مرتبط" class="w-full h-auto object-cover max-h-64 rounded-lg" loading="lazy">`;
-        contentBox.appendChild(imgWrapper);
-      }
-
-      if (sender === 'bot') {
-        const avatar = document.createElement('div');
-        avatar.className = 'w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1';
-        avatar.innerHTML = '<i class="fa-solid fa-graduation-cap"></i>';
-        wrapper.appendChild(avatar);
-      }
-
-      wrapper.appendChild(contentBox);
-      chatContainer.appendChild(wrapper);
-      chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
-      return contentBox;
+      appendMessageUI(sender, text, imageUrl);
+      // ذخیره در تاریخچه آرایه
+      conversationHistory.push({ role: sender, content: text });
+      localStorage.setItem('science_chat_history', JSON.stringify(conversationHistory));
     }
 
     function clearChat() {
-      chatContainer.innerHTML = '';
-      appendMessage('bot', `سلام مجدد ${userName || ''} عزیز! گفتگو تازه شد. هر سوالی داری در خدمتم.`);
+      if (confirm('آیا می‌خواهید گفتگوی جدیدی شروع کنید؟')) {
+        conversationHistory = [];
+        localStorage.removeItem('science_chat_history');
+        const container = document.getElementById('chat-container');
+        container.innerHTML = `
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 shadow-xs max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2 message-content">
+              <p id="welcome-msg-text" class="font-bold text-teal-800 dark:text-teal-400">سلام ${userName || 'دوست'} عزیز! 👋</p>
+              من همراه و راهنمای تو در درس علوم تجربی نهم هستم. هر کجای کتاب، آزمایش‌ها یا نمونه سوالات سوالی داری بپرس تا گام به گام با هم یاد بگیریم! 🌟
+            </div>
+          </div>
+        `;
+      }
     }
 
-    chatForm.addEventListener('submit', async (e) => {
+    function scrollToBottom() {
+      const container = document.getElementById('chat-container');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function handleSendMessage(e) {
       e.preventDefault();
-      const query = userInput.value.trim();
+      const input = document.getElementById('user-input');
+      const query = input.value.trim();
       if (!query) return;
 
+      input.value = '';
       appendMessage('user', query);
-      userInput.value = '';
-      sendBtn.disabled = true;
 
-      const loadingBox = appendMessage('bot', 'در حال بررسی و آماده‌سازی پاسخ... ⏳');
+      // ساخت باکس لودینگ
+      const container = document.getElementById('chat-container');
+      const loadingId = 'loading-' + Date.now();
+      const loadingWrapper = document.createElement('div');
+      loadingWrapper.id = loadingId;
+      loadingWrapper.className = `flex items-start gap-3`;
+      loadingWrapper.innerHTML = `
+        <div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 rounded-2xl rounded-tr-none p-4 shadow-xs text-sm flex items-center gap-2">
+          <i class="fa-solid fa-spinner fa-spin text-teal-500"></i>
+          <span>در حال بررسی و آماده‌سازی پاسخ... ⏳</span>
+        </div>
+      `;
+      container.appendChild(loadingWrapper);
+      scrollToBottom();
 
-      // بررسی ایمن برای پیدا کردن تصویر (حتی اگر فایل دانش هنوز لود نشده باشد کرش نمی‌کند)
+      // چک کردن تطابق عکس با کلیدواژه‌ها
       let matchedImage = null;
-      if (typeof SCIENCE_IMAGE_BANK !== 'undefined') {
-        for (let key in SCIENCE_IMAGE_BANK) {
-          if (query.includes(key) || key.split(' ').some(word => word.length > 2 && query.includes(word))) {
-            matchedImage = SCIENCE_IMAGE_BANK[key];
-            break;
-          }
+      for (const [keyword, imgUrl] of Object.entries(SCIENCE_IMAGE_BANK)) {
+        if (query.includes(keyword)) {
+          matchedImage = imgUrl;
+          break;
         }
       }
 
-      const knowledgeContent = (typeof SCIENCE_KNOWLEDGE_BASE !== 'undefined') ? SCIENCE_KNOWLEDGE_BASE : '';
-
       try {
+        // ارسال کل تاریخچه گفتگو به همراه پرامپت سیستم و پیام جدید
+        const messagesPayload = [
+          {
+            role: "system",
+            content: `نام کاربر: ${userName || 'دانش‌آموز'}.\n${SCIENCE_KNOWLEDGE_BASE}\nلطفاً پاسخ‌ها را دقیق، علمی، روان و متناسب با کتاب علوم تجربی نهم با لحنی دوستانه و آموزشی ارائه بده.`
+          },
+          ...conversationHistory.slice(-12) // ارسال آخرین ۱۲ پیام برای حفظ context و عدم تجاوز از توکن‌ها
+        ];
+
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
@@ -237,47 +345,25 @@
           },
           body: JSON.stringify({
             model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: `نام تو «لذت یادگیری» است. مخاطب تو دانش‌آموزی با نام «${userName || 'دوست من'}» است.
-تو یک معلم صمیمی، دلسوز، باسواد و پرانرژی برای علوم تجربی پایه نهم هستی.
-پاسخ‌هایت باید کامل، دقیق، کاربردی و همراه با نکات امتحانی باشد و در صورت لزوم مثال‌های ملموس بزنی. هرگز در پاسخ‌هایت به وجود فایل، دیتاست یا متن پس‌زمینه اشاره نکن؛ طوری رفتار کن که دانش و سواد کامل خودت است.
-محتوای درسی:
-${knowledgeContent}`
-              },
-              { role: 'user', content: query }
-            ],
-            temperature: 0.4
+            messages: messagesPayload,
+            temperature: 0.5
           })
         });
 
         const data = await response.json();
+        document.getElementById(loadingId)?.remove();
 
-        if (response.ok && data.choices && data.choices[0]) {
-          loadingBox.innerHTML = '';
-          const txt = document.createElement('div');
-          txt.textContent = data.choices[0].message.content;
-          loadingBox.appendChild(txt);
-
-          if (matchedImage) {
-            const imgWrapper = document.createElement('div');
-            imgWrapper.className = 'rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 mt-2 bg-slate-100 dark:bg-slate-950';
-            imgWrapper.innerHTML = `<img src="${matchedImage}" alt="تصویر مرتبط" class="w-full h-auto object-cover max-h-64 rounded-lg" loading="lazy">`;
-            loadingBox.appendChild(imgWrapper);
-          }
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          const botReply = data.choices[0].message.content;
+          appendMessage('assistant', botReply, matchedImage);
         } else {
-          const errDetail = data.error ? (data.error.message || JSON.stringify(data.error)) : 'پاسخی دریافت نشد.';
-          loadingBox.textContent = `⚠️ خطا از سرور: ${errDetail}`;
+          appendMessage('assistant', 'پاسخی از سرور دریافت نشد. لطفاً دوباره تلاش کنید.');
         }
       } catch (err) {
-        console.error(err);
-        loadingBox.textContent = `⚠️ خطا در برقراری ارتباط: ${err.message || 'مشکل در شبکه'}`;
-      } finally {
-        sendBtn.disabled = false;
-        userInput.focus();
+        document.getElementById(loadingId)?.remove();
+        appendMessage('assistant', 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.');
       }
-    });
+    }
   </script>
 </body>
 </html>
