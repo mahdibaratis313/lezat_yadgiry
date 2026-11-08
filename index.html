@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>لذت یادگیری | دستیار هوشمند علوم نهم</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Vazirmatn', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800&display=swap');
+    * { font-family: 'Vazirmatn', sans-serif; -webkit-tap-highlight-color: transparent; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 min-h-screen flex flex-col justify-between text-slate-800 dark:text-slate-100 transition-colors duration-300">
+
+  <!-- مودال دریافت نام در ورود اول -->
+  <div id="name-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl text-center space-y-4">
+      <div class="w-16 h-16 rounded-2xl bg-teal-500 text-white flex items-center justify-center text-2xl mx-auto shadow-lg shadow-teal-500/30">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <h2 class="text-xl font-extrabold text-slate-800 dark:text-white">به «لذت یادگیری» خوش آمدید! 🌟</h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400">برای شروع، اسمت چیه دوست من؟</p>
+      <input type="text" id="username-input" placeholder="مثلاً: علی..." class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl px-4 py-3 text-center text-base focus:outline-none focus:border-teal-500 transition">
+      <button onclick="saveUsername()" class="w-full bg-teal-500 hover:bg-teal-600 active:scale-95 text-white font-bold py-3 rounded-2xl transition shadow-md shadow-teal-500/20">
+        شروع یادگیری 🚀
+      </button>
+    </div>
+  </div>
+
+  <!-- هدر -->
+  <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 px-4 py-3 shadow-xs">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-white text-lg shadow-md shadow-teal-500/20">
+            <i class="fa-solid fa-chalkboard-user"></i>
+          </div>
+          <span class="absolute -bottom-0.5 -left-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold text-slate-800 dark:text-white text-base md:text-lg">لذت یادگیری</h1>
+            <span class="text-[10px] bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400 font-semibold px-2 py-0.5 rounded-full border border-teal-200 dark:border-teal-800">علوم نهم</span>
+          </div>
+          <p id="user-greeting-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">همراه و راهنمای درسی شما</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="toggleDarkMode()" title="تغییر حالت تیره/روشن" class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 w-10 h-10 rounded-xl flex items-center justify-center transition">
+          <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+        </button>
+        <button onclick="clearChat()" title="گفتگوی جدید" class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 w-10 h-10 rounded-xl flex items-center justify-center transition">
+          <i class="fa-solid fa-rotate-right text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- چت -->
+  <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-4xl w-full mx-auto">
+    <div class="flex items-start gap-3">
+      <div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 shadow-xs max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2">
+        <p id="welcome-msg-text" class="font-bold text-teal-800 dark:text-teal-400">سلام دوست عزیز! 👋</p>
+        من همراه و راهنمای تو در درس علوم تجربی نهم هستم. هر کجای کتاب، آزمایش‌ها یا نمونه سوالات سوالی داری بپرس تا گام به گام با هم یاد بگیریم! 🌟
+      </div>
+    </div>
+  </main>
+
+  <!-- نوار پیام -->
+  <footer class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 md:p-4 sticky bottom-0 z-20">
+    <div class="max-w-4xl mx-auto">
+      <form id="chat-form" class="flex items-center gap-2">
+        <input 
+          type="text" 
+          id="user-input" 
+          placeholder="سوالت رو بپرس..." 
+          autocomplete="off"
+          class="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm md:text-base rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-teal-500/40 focus:border-teal-500 transition"
+        />
+        <button 
+          type="submit" 
+          id="send-btn" 
+          class="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition shadow-md shadow-teal-500/20 disabled:opacity-50"
+        >
+          <i class="fa-solid fa-paper-plane -rotate-90 text-sm"></i>
+        </button>
+      </form>
+      <p class="text-center text-[11px] text-slate-400 mt-2">لذت یادگیری | همراه هوشمند علوم تجربی نهم 🚀</p>
+    </div>
+  </footer>
+
+  <script src="knowledge.js"></script>
+  <script>
+    // ==========================================
+    // تنظیم کلید API
+    // کلید خود را بین کوتیشن زیر قرار دهید:
+    // ==========================================
+    const API_KEY = "کلید_جدید_خود_را_اینجا_قرار_دهید";
+    const API_URL = "https://api.openai.com/v1/chat/completions";
+
+    let userName = localStorage.getItem('science_user_name') || '';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (userName) {
+        document.getElementById('name-modal').classList.add('hidden');
+        updateGreeting();
+      }
+      if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.getElementById('theme-icon').className = 'fa-solid fa-sun text-sm';
+      }
+    });
+
+    function saveUsername() {
+      const input = document.getElementById('username-input').value.trim();
+      if (!input) return;
+      userName = input;
+      localStorage.setItem('science_user_name', userName);
+      document.getElementById('name-modal').classList.add('hidden');
+      updateGreeting();
+      appendMessage('bot', `سلام ${userName} عزیز! خیلی خوش اومدی. از کدوم درس شروع کنیم؟`);
+    }
+
+    function updateGreeting() {
+      document.getElementById('user-greeting-sub').textContent = `سلام ${userName} عزیز`;
+    }
+
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      const icon = document.getElementById('theme-icon');
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        icon.className = 'fa-solid fa-moon text-sm';
+      } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        icon.className = 'fa-solid fa-sun text-sm';
+      }
+    }
+
+    const chatContainer = document.getElementById('chat-container');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    function appendMessage(sender, text, imageUrl = null) {
+      const wrapper = document.createElement('div');
+      wrapper.className = sender === 'user' ? 'flex justify-end' : 'flex items-start gap-3';
+
+      const contentBox = document.createElement('div');
+      contentBox.className = sender === 'user'
+        ? 'bg-teal-600 text-white rounded-2xl rounded-tl-none p-3.5 max-w-[85%] md:max-w-lg text-sm leading-relaxed shadow-sm whitespace-pre-wrap'
+        : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 max-w-[85%] md:max-w-lg text-sm leading-relaxed shadow-xs whitespace-pre-wrap space-y-3';
+
+      const textNode = document.createElement('div');
+      textNode.textContent = text;
+      contentBox.appendChild(textNode);
+
+      if (imageUrl) {
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = 'rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 mt-2 bg-slate-100 dark:bg-slate-950';
+        imgWrapper.innerHTML = `<img src="${imageUrl}" alt="تصویر مرتبط" class="w-full h-auto object-cover max-h-64 rounded-lg" loading="lazy">`;
+        contentBox.appendChild(imgWrapper);
+      }
+
+      if (sender === 'bot') {
+        const avatar = document.createElement('div');
+        avatar.className = 'w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1';
+        avatar.innerHTML = '<i class="fa-solid fa-graduation-cap"></i>';
+        wrapper.appendChild(avatar);
+      }
+
+      wrapper.appendChild(contentBox);
+      chatContainer.appendChild(wrapper);
+      chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+      return contentBox;
+    }
+
+    function clearChat() {
+      chatContainer.innerHTML = '';
+      appendMessage('bot', `سلام مجدد ${userName || ''} عزیز! گفتگو تازه شد. هر سوالی داری در خدمتم.`);
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = userInput.value.trim();
+      if (!query) return;
+
+      appendMessage('user', query);
+      userInput.value = '';
+      sendBtn.disabled = true;
+
+      const loadingBox = appendMessage('bot', 'در حال بررسی و آماده‌سازی پاسخ... ⏳');
+
+      // یافتن خودکار تصویر متناسب با موضوع سوال
+      let matchedImage = null;
+      for (let key in SCIENCE_IMAGE_BANK) {
+        if (query.includes(key) || key.split(' ').some(word => word.length > 2 && query.includes(word))) {
+          matchedImage = SCIENCE_IMAGE_BANK[key];
+          break;
+        }
+      }
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `نام تو «لذت یادگیری» است. مخاطب تو دانش‌آموزی با نام «${userName}» است.
+تو یک معلم صمیمی، دلسوز، باسواد و پرانرژی برای علوم تجربی پایه نهم هستی.
+پاسخ‌هایت باید کامل، دقیق، کاربردی و همراه با نکات امتحانی باشد و در صورت لزوم مثال‌های ملموس بزنی. هرگز در پاسخ‌هایت به وجود فایل، دیتاست یا متن پس‌زمینه اشاره نکن؛ طوری رفتار کن که دانش و سواد کامل خودت است.
+محتوای درسی:
+${SCIENCE_KNOWLEDGE_BASE}`
+              },
+              { role: 'user', content: query }
+            ],
+            temperature: 0.4
+          })
+        });
+
+        const data = await response.json();
+        if (data.choices && data.choices[0]) {
+          loadingBox.innerHTML = '';
+          const txt = document.createElement('div');
+          txt.textContent = data.choices[0].message.content;
+          loadingBox.appendChild(txt);
+
+          if (matchedImage) {
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 mt-2 bg-slate-100 dark:bg-slate-950';
+            imgWrapper.innerHTML = `<img src="${matchedImage}" alt="تصویر مرتبط" class="w-full h-auto object-cover max-h-64 rounded-lg" loading="lazy">`;
+            loadingBox.appendChild(imgWrapper);
+          }
+        } else {
+          loadingBox.textContent = 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.';
+        }
+      } catch (err) {
+        loadingBox.textContent = 'خطا در ارتباط. لطفاً اتصال اینترنت خود را بررسی کنید.';
+      } finally {
+        sendBtn.disabled = false;
+        userInput.focus();
+      }
+    });
+  </script>
+</body>
+</html>
