@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>لذت یادگیری | دستیار هوشمند علوم نهم</title>
+  <!-- رفع خطای فاوآیکون -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2228%22>📚</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script>
@@ -108,14 +110,15 @@
     </div>
   </footer>
 
-  <script src="knowledge.js"></script>
+  <!-- بارگذاری فایل دانش -->
+  <script src="./knowledge.js"></script>
+
   <script>
     // ==========================================
-    // تنظیم کلید API
-    // کلید خود را بین کوتیشن زیر قرار دهید:
+    // تنظیم کلید و آدرس API
     // ==========================================
-    const API_KEY = "کلید_جدید_خود_را_اینجا_قرار_دهید";
-    const API_URL = "https://api.openai.com/v1/chat/completions";
+    const API_KEY = "sk-ORnuiKkMVnFMY3wMQ3rKwTEhKGsvE3jQbYL8afOepMojgnfN"; // کلید اختصاصی خود را اینجا بگذارید
+    const API_URL = "https://api.gapgpt.app/v1/chat/completions";
 
     let userName = localStorage.getItem('science_user_name') || '';
 
@@ -212,14 +215,18 @@
 
       const loadingBox = appendMessage('bot', 'در حال بررسی و آماده‌سازی پاسخ... ⏳');
 
-      // یافتن خودکار تصویر متناسب با موضوع سوال
+      // بررسی ایمن برای پیدا کردن تصویر (حتی اگر فایل دانش هنوز لود نشده باشد کرش نمی‌کند)
       let matchedImage = null;
-      for (let key in SCIENCE_IMAGE_BANK) {
-        if (query.includes(key) || key.split(' ').some(word => word.length > 2 && query.includes(word))) {
-          matchedImage = SCIENCE_IMAGE_BANK[key];
-          break;
+      if (typeof SCIENCE_IMAGE_BANK !== 'undefined') {
+        for (let key in SCIENCE_IMAGE_BANK) {
+          if (query.includes(key) || key.split(' ').some(word => word.length > 2 && query.includes(word))) {
+            matchedImage = SCIENCE_IMAGE_BANK[key];
+            break;
+          }
         }
       }
+
+      const knowledgeContent = (typeof SCIENCE_KNOWLEDGE_BASE !== 'undefined') ? SCIENCE_KNOWLEDGE_BASE : '';
 
       try {
         const response = await fetch(API_URL, {
@@ -233,11 +240,11 @@
             messages: [
               {
                 role: 'system',
-                content: `نام تو «لذت یادگیری» است. مخاطب تو دانش‌آموزی با نام «${userName}» است.
+                content: `نام تو «لذت یادگیری» است. مخاطب تو دانش‌آموزی با نام «${userName || 'دوست من'}» است.
 تو یک معلم صمیمی، دلسوز، باسواد و پرانرژی برای علوم تجربی پایه نهم هستی.
 پاسخ‌هایت باید کامل، دقیق، کاربردی و همراه با نکات امتحانی باشد و در صورت لزوم مثال‌های ملموس بزنی. هرگز در پاسخ‌هایت به وجود فایل، دیتاست یا متن پس‌زمینه اشاره نکن؛ طوری رفتار کن که دانش و سواد کامل خودت است.
 محتوای درسی:
-${SCIENCE_KNOWLEDGE_BASE}`
+${knowledgeContent}`
               },
               { role: 'user', content: query }
             ],
@@ -246,7 +253,8 @@ ${SCIENCE_KNOWLEDGE_BASE}`
         });
 
         const data = await response.json();
-        if (data.choices && data.choices[0]) {
+
+        if (response.ok && data.choices && data.choices[0]) {
           loadingBox.innerHTML = '';
           const txt = document.createElement('div');
           txt.textContent = data.choices[0].message.content;
@@ -259,10 +267,12 @@ ${SCIENCE_KNOWLEDGE_BASE}`
             loadingBox.appendChild(imgWrapper);
           }
         } else {
-          loadingBox.textContent = 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.';
+          const errDetail = data.error ? (data.error.message || JSON.stringify(data.error)) : 'پاسخی دریافت نشد.';
+          loadingBox.textContent = `⚠️ خطا از سرور: ${errDetail}`;
         }
       } catch (err) {
-        loadingBox.textContent = 'خطا در ارتباط. لطفاً اتصال اینترنت خود را بررسی کنید.';
+        console.error(err);
+        loadingBox.textContent = `⚠️ خطا در برقراری ارتباط: ${err.message || 'مشکل در شبکه'}`;
       } finally {
         sendBtn.disabled = false;
         userInput.focus();
