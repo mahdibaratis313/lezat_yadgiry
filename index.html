@@ -23,23 +23,41 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     .dark ::-webkit-scrollbar-thumb { background: #334155; }
-    .message-content img { max-width: 100%; border-radius: 0.75rem; margin-top: 0.75rem; margin-bottom: 0.25rem; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 4px 10px -2px rgba(0,0,0,0.1); }
     .cursor-blink::after { content: '▋'; display: inline-block; vertical-align: baseline; animation: blink 0.8s infinite; color: #0d9488; margin-right: 2px; }
     @keyframes blink { 0%, 50% { opacity: 1; } 50.1%, 100% { opacity: 0; } }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 min-h-screen flex flex-col justify-between text-slate-800 dark:text-slate-100 transition-colors duration-300">
 
   <!-- مودال تنظیمات و پروفایل کاربر -->
   <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-5 text-right">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl space-y-4 text-right">
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <h3 class="text-lg font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-teal-500"></i> تنظیمات نمایه و یادگیری
+          <i class="fa-solid fa-sliders text-teal-500"></i> نمایه و تنظیمات
         </h3>
         <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
           <i class="fa-solid fa-xmark"></i>
         </button>
+      </div>
+
+      <!-- انتخاب و آپلود عکس پروفایل -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300">عکس پروفایل شما:</label>
+        <div class="flex items-center gap-4">
+          <div id="avatar-preview-box" class="w-16 h-16 rounded-2xl bg-teal-500 text-white flex items-center justify-center text-2xl font-bold overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700 shrink-0">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div class="space-y-2 flex-1">
+            <label class="cursor-pointer bg-teal-50 hover:bg-teal-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-teal-700 dark:text-teal-300 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition border border-teal-200 dark:border-slate-700">
+              <i class="fa-solid fa-cloud-arrow-up"></i> آپلود از گالری / دستگاه
+              <input type="file" id="avatar-upload-input" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+            </label>
+            <button type="button" onclick="removeAvatarImage()" class="text-xs text-rose-500 hover:underline block">حذف تصویر شخصی</button>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -128,7 +146,6 @@
 
   <!-- نوار پرسش‌های آماده و ارسال پیام -->
   <footer class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 p-3 md:p-4 sticky bottom-0 z-20 space-y-2.5">
-    <!-- سوالات پیشنهادی فصل به فصل -->
     <div class="max-w-4xl mx-auto flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
       <span class="text-slate-400 dark:text-slate-500 shrink-0 font-medium"><i class="fa-solid fa-lightbulb text-amber-500"></i> پرسش‌های کلیدی:</span>
       <button onclick="quickAsk('تفاوت پیوند یونی و اشتراکی را با مثال توضیح بده')" class="bg-slate-100 hover:bg-teal-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-xl shrink-0 transition border border-slate-200 dark:border-slate-700">پیوند یونی و اشتراکی؟</button>
@@ -159,80 +176,15 @@
 
   <script>
     // ==========================================
-    // تنظیمات API و کلید
+    // تنظیمات API و ذخیره‌سازی
     // ==========================================
     const API_KEY = "sk-ORnuiKkMVnFMY3wMQ3rKwTEhKGsvE3jQbYL8afOepMojgnfN";
     const API_URL = "https://api.gapgpt.app/v1/chat/completions";
 
     let userName = localStorage.getItem('science_user_name') || '';
+    let userAvatar = localStorage.getItem('science_user_avatar') || '';
     let assistantTone = localStorage.getItem('science_assistant_tone') || 'معلم مهربان و راهنما';
     let conversationHistory = JSON.parse(localStorage.getItem('science_chat_history')) || [];
-
-    // ==========================================
-    // بانک جامع تصاویر علمی ویکی‌مدیا (تأییدشده و فعال برای مباحث علوم نهم)
-    // ==========================================
-    const SCIENCE_IMAGE_BANK = {
-      "مس": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Copper_wire_rod_produced_by_LS_Cable_%26_System.jpg/640px-Copper_wire_rod_produced_by_LS_Cable_%26_System.jpg",
-      "فلز": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Copper_wire_rod_produced_by_LS_Cable_%26_System.jpg/640px-Copper_wire_rod_produced_by_LS_Cable_%26_System.jpg",
-      "طلا": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Gold_nugget.jpg/640px-Gold_nugget.jpg",
-      "آهن": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Iron_crystals_electrolytic_1cm3.jpg/440px-Iron_crystals_electrolytic_1cm3.jpg",
-      "گوگرد": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Sulfur-sample.jpg/640px-Sulfur-sample.jpg",
-      "فسفر": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Phosphorus-red.jpg/640px-Phosphorus-red.jpg",
-      "پلاستیک": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Polyethylene_balls.jpg/640px-Polyethylene_balls.jpg",
-      "پلیمر": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Polyethylene_balls.jpg/640px-Polyethylene_balls.jpg",
-      "بازیافت": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/PET-bottle-recycling.jpg/640px-PET-bottle-recycling.jpg",
-      "پیوند یونی": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Ionic_bonding.svg/640px-Ionic_bonding.svg.png",
-      "پیوند اشتراکی": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Covalent_bond_hydrogen.svg/640px-Covalent_bond_hydrogen.svg.png",
-      "کووالانسی": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Covalent_bond_hydrogen.svg/640px-Covalent_bond_hydrogen.svg.png",
-      "آب": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Water_molecule.svg/640px-Water_molecule.svg.png",
-      "نمک": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Sodium_chloride_crystal_3D_axes.png/640px-Sodium_chloride_crystal_3D_axes.png",
-      "متان": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Methane-3D-space-filling.svg/640px-Methane-3D-space-filling.svg.png",
-      "چرخه کربن": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Carbon_cycle-cute_diagram.svg/640px-Carbon_cycle-cute_diagram.svg.png",
-      "نفت": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Petroleum.JPG/640px-Petroleum.JPG",
-      "شتاب": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Velocity_vs_time_graph.svg/500px-Velocity_vs_time_graph.svg.png",
-      "تندی": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Speedometer_140kmh.jpg/640px-Speedometer_140kmh.jpg",
-      "سرعت": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Distance-time_graph.svg/640px-Distance-time_graph.svg.png",
-      "نیوتون": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Newton_cradle.gif/400px-Newton_cradle.gif",
-      "نیرو": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Newton_cradle.gif/400px-Newton_cradle.gif",
-      "اصطکاک": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Newton_cradle.gif/400px-Newton_cradle.gif",
-      "زمین‌ساخت": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Plate_tectonics_map.svg/640px-Plate_tectonics_map.svg.png",
-      "گسل": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Plate_tectonics_map.svg/640px-Plate_tectonics_map.svg.png",
-      "فسیل": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Ammonite_fossil.jpg/640px-Ammonite_fossil.jpg",
-      "سنگواره": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Ammonite_fossil.jpg/640px-Ammonite_fossil.jpg",
-      "فشار": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Hydraulic_press.svg/500px-Hydraulic_press.svg.png",
-      "پاسکال": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Hydraulic_press.svg/500px-Hydraulic_press.svg.png",
-      "بارومتر": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Mercury_barometer.jpg/640px-Mercury_barometer.jpg",
-      "ماشین": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Levers_first_second_and_third_class.svg/640px-Levers_first_second_and_third_class.svg.png",
-      "اهرم": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Levers_first_second_and_third_class.svg/640px-Levers_first_second_and_third_class.svg.png",
-      "قرقره": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Pulley1.svg/640px-Pulley1.svg.png",
-      "منظومه شمسی": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Planets2008.jpg/800px-Planets2008.jpg",
-      "سیاره": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Planets2008.jpg/800px-Planets2008.jpg",
-      "خورشید": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/640px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg",
-      "ماه": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/FullMoon2010.jpg/640px-FullMoon2010.jpg",
-      "سلول": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Animal_cell_structure_en.svg/600px-Animal_cell_structure_en.svg.png",
-      "هسته": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Animal_cell_structure_en.svg/600px-Animal_cell_structure_en.svg.png",
-      "گیاه": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Plant_cell_structure_svg.svg/640px-Plant_cell_structure_svg.svg.png",
-      "خزه": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Moss_on_rock.jpg/640px-Moss_on_rock.jpg",
-      "سرخس": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Fern_frond_with_sori.jpg/640px-Fern_frond_with_sori.jpg",
-      "کاج": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Pine_cone_female.jpg/640px-Pine_cone_female.jpg",
-      "اسفنج": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Aplysina_aerophoba.jpg/640px-Aplysina_aerophoba.jpg",
-      "مرجان": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Coral_Outcrop_Flynn_Reef.jpg/640px-Coral_Outcrop_Flynn_Reef.jpg",
-      "عروس دریایی": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Jelly_cck.jpg/640px-Jelly_cck.jpg",
-      "حلزون": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Cornu_aspersum_1.jpg/640px-Cornu_aspersum_1.jpg",
-      "بندپایان": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/European_honey_bee_extracts_nectar.jpg/640px-European_honey_bee_extracts_nectar.jpg",
-      "حشره": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/European_honey_bee_extracts_nectar.jpg/640px-European_honey_bee_extracts_nectar.jpg",
-      "مهره‌دار": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Green_Tree_Frog_with_water_droplets.jpg/640px-Green_Tree_Frog_with_water_droplets.jpg",
-      "قورباغه": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Green_Tree_Frog_with_water_droplets.jpg/640px-Green_Tree_Frog_with_water_droplets.jpg",
-      "خزنده": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Chamaeleo_chamaeleon_2.jpg/640px-Chamaeleo_chamaeleon_2.jpg",
-      "پرنده": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/House_sparrow04.jpg/640px-House_sparrow04.jpg",
-      "پستاندار": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Lion_waiting_in_Namibia.jpg/640px-Lion_waiting_in_Namibia.jpg",
-      "اکوسیستم": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Temperate_rainforest.jpg/640px-Temperate_rainforest.jpg",
-      "زنجیره غذایی": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Food_web.svg/640px-Food_web.svg.png",
-      "اسید": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/PH_scale.svg/600px-PH_scale.svg.png",
-      "باز": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/PH_scale.svg/600px-PH_scale.svg.png",
-      "DNA": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/DNA_Simple.svg/400px-DNA_Simple.svg.png",
-      "ژن": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/DNA_Simple.svg/400px-DNA_Simple.svg.png"
-    };
 
     // ==========================================
     // محتوای جامع ۱۵ فصل علوم پایه نهم
@@ -315,6 +267,7 @@
       }
 
       renderExistingHistory();
+      renderAvatarPreview();
     });
 
     function saveUsername() {
@@ -328,7 +281,7 @@
       localStorage.setItem('science_user_name', userName);
       document.getElementById('name-modal').classList.add('hidden');
       updateGreeting();
-      appendMessage('assistant', `سلام ${userName} عزیز! خوش اومدی. هر کجای کتاب علوم نهم سوال داری مطرح کن تا بررسی کنیم. 🌟`);
+      appendMessage('assistant', `سلام ${userName} عزیز! خوش اومدی. هر کجای کتاب علوم نهم سوال داری مطرح کن تا با هم بررسی کنیم. 🌟`);
     }
 
     function toggleSettingsModal() {
@@ -337,9 +290,63 @@
       if (isHidden) {
         document.getElementById('settings-name-input').value = userName || '';
         document.getElementById('settings-tone-select').value = assistantTone;
+        renderAvatarPreview();
         modal.classList.remove('hidden');
       } else {
         modal.classList.add('hidden');
+      }
+    }
+
+    // آپلود و فشرده‌سازی عکس پروفایل کاربر
+    function handleAvatarUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 150;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height *= maxDim / width;
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width *= maxDim / height;
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          userAvatar = canvas.toDataURL('image/jpeg', 0.8);
+          renderAvatarPreview();
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeAvatarImage() {
+      userAvatar = '';
+      renderAvatarPreview();
+    }
+
+    function renderAvatarPreview() {
+      const box = document.getElementById('avatar-preview-box');
+      if (userAvatar) {
+        box.innerHTML = `<img src="${userAvatar}" class="w-full h-full object-cover">`;
+      } else {
+        box.innerHTML = `<i class="fa-solid fa-user"></i>`;
       }
     }
 
@@ -352,8 +359,30 @@
       }
       assistantTone = toneInput;
       localStorage.setItem('science_assistant_tone', assistantTone);
+
+      if (userAvatar) {
+        localStorage.setItem('science_user_avatar', userAvatar);
+      } else {
+        localStorage.removeItem('science_user_avatar');
+      }
+
       updateGreeting();
       toggleSettingsModal();
+
+      // بازسازی پیام‌ها تا آواتار جدید بلافاصله اعمال شود
+      const container = document.getElementById('chat-container');
+      container.innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none p-4 shadow-xs max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2 message-content">
+            <p id="welcome-msg-text" class="font-bold text-teal-800 dark:text-teal-400">سلام ${userName || 'دوست'} عزیز! 👋</p>
+            من همراه و راهنمای تخصصی تو در درس علوم تجربی پایه نهم هستم. هر سوال درسی، فرمول، آزمایش یا نکته امتحانی داری بپرس تا با هم یاد بگیریم! 🌟
+          </div>
+        </div>
+      `;
+      renderExistingHistory();
     }
 
     function updateGreeting() {
@@ -382,33 +411,37 @@
 
     function renderExistingHistory() {
       conversationHistory.forEach(msg => {
-        appendMessageUI(msg.role, msg.content, msg.image || null);
+        appendMessageUI(msg.role, msg.content);
       });
       scrollToBottom();
     }
 
-    function appendMessageUI(sender, text, imageUrl = null) {
+    function appendMessageUI(sender, text) {
       const container = document.getElementById('chat-container');
       const isUser = sender === 'user';
       
       const wrapper = document.createElement('div');
       wrapper.className = `flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}`;
 
-      let avatar = isUser 
-        ? `<div class="w-9 h-9 rounded-xl bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1"><i class="fa-solid fa-user"></i></div>`
-        : `<div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1"><i class="fa-solid fa-graduation-cap"></i></div>`;
+      let avatar;
+      if (isUser) {
+        if (userAvatar) {
+          avatar = `<div class="w-9 h-9 rounded-xl overflow-hidden shadow-sm mt-1 shrink-0 border border-slate-200 dark:border-slate-700"><img src="${userAvatar}" class="w-full h-full object-cover"></div>`;
+        } else {
+          avatar = `<div class="w-9 h-9 rounded-xl bg-slate-700 dark:bg-slate-600 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1"><i class="fa-solid fa-user"></i></div>`;
+        }
+      } else {
+        avatar = `<div class="w-9 h-9 rounded-xl bg-teal-500 text-white flex items-center justify-center text-sm shrink-0 shadow-sm mt-1"><i class="fa-solid fa-graduation-cap"></i></div>`;
+      }
 
       let bubbleClass = isUser
         ? 'bg-teal-600 text-white rounded-2xl rounded-tl-none'
         : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl rounded-tr-none shadow-xs';
 
-      let imageHtml = imageUrl ? `<div class="mt-2"><img src="${imageUrl}" alt="تصویر مفهومی علوم نهم" loading="lazy" class="w-full max-h-72 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"></div>` : '';
-
       wrapper.innerHTML = `
         ${avatar}
         <div class="${bubbleClass} p-4 max-w-[85%] md:max-w-lg text-sm leading-relaxed space-y-2 message-content">
           <p class="whitespace-pre-wrap">${escapeHtml(text)}</p>
-          ${imageHtml}
         </div>
       `;
       container.appendChild(wrapper);
@@ -416,9 +449,9 @@
       return wrapper;
     }
 
-    function appendMessage(sender, text, imageUrl = null) {
-      appendMessageUI(sender, text, imageUrl);
-      conversationHistory.push({ role: sender, content: text, image: imageUrl });
+    function appendMessage(sender, text) {
+      appendMessageUI(sender, text);
+      conversationHistory.push({ role: sender, content: text });
       localStorage.setItem('science_chat_history', JSON.stringify(conversationHistory));
     }
 
@@ -456,19 +489,8 @@
       document.getElementById('chat-form').dispatchEvent(new Event('submit', { cancelable: true }));
     }
 
-    // تشخیص دقیق تصویر از روی پرسش کاربر یا پاسخ آماده شده
-    function findRelevantImage(query, responseText) {
-      const combinedText = (query + " " + responseText).toLowerCase();
-      for (const [keyword, url] of Object.entries(SCIENCE_IMAGE_BANK)) {
-        if (combinedText.includes(keyword.toLowerCase())) {
-          return url;
-        }
-      }
-      return null;
-    }
-
-    // افکت تایپ فوق‌سریع بدون کُند کردن پاسخ کاربر
-    function typeAssistantResponse(fullText, imageUrl) {
+    // تایپ سریع و روان بدون تاخیر
+    function typeAssistantResponse(fullText) {
       const container = document.getElementById('chat-container');
       const wrapper = document.createElement('div');
       wrapper.className = `flex items-start gap-3`;
@@ -486,7 +508,7 @@
       scrollToBottom();
 
       let index = 0;
-      const step = Math.max(2, Math.floor(fullText.length / 50)); // تقسیم بر گام‌های سریع تا در کمتر از ۱.۵ ثانیه تمام شود
+      const step = Math.max(3, Math.floor(fullText.length / 45)); 
       const timer = setInterval(() => {
         index += step;
         if (index >= fullText.length) {
@@ -494,23 +516,15 @@
           textP.textContent = fullText;
           textP.classList.remove('cursor-blink');
           clearInterval(timer);
-
-          if (imageUrl) {
-            const imgBox = document.createElement('div');
-            imgBox.className = 'mt-2';
-            imgBox.innerHTML = `<img src="${imageUrl}" alt="تصویر علمی مرتبط" loading="lazy" class="w-full max-h-72 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">`;
-            bubble.appendChild(imgBox);
-          }
           scrollToBottom();
 
-          // ذخیره در تاریخچه
-          conversationHistory.push({ role: 'assistant', content: fullText, image: imageUrl });
+          conversationHistory.push({ role: 'assistant', content: fullText });
           localStorage.setItem('science_chat_history', JSON.stringify(conversationHistory));
         } else {
           textP.textContent = fullText.substring(0, index);
           scrollToBottom();
         }
-      }, 20);
+      }, 15);
     }
 
     async function handleSendMessage(e) {
@@ -522,7 +536,6 @@
       input.value = '';
       appendMessage('user', query);
 
-      // لودینگ
       const container = document.getElementById('chat-container');
       const loadingId = 'loading-' + Date.now();
       const loadingWrapper = document.createElement('div');
@@ -543,14 +556,14 @@
       try {
         const systemPrompt = `تو دستیار تخصصی «علوم تجربی پایه نهم» به نام «لذت یادگیری» هستی.
 نام دانش‌آموز: ${userName || 'دانش‌آموز عزیز'}.
-لحن تعیین‌شده برای تو: ${assistantTone}.
+لحن تعیین‌شده برای پاسخ‌های تو: ${assistantTone}.
 
-قوانین سفت و سخت رفتاری:
+قوانین مهم و غیرقابل تغییر:
 ۱. فقط و فقط به سوالات، مباحث، تعاریف، فرمول‌ها و نکات آزمایشگاهی کتاب علوم تجربی نهم پاسخ بده.
-۲. اگر کاربر سوالی غیرمرتبط با علوم تجربی و مدرسه پرسید (سیاسی، ورزشی، سرگرمی نامرتبط، کدنویسی، مسائل متفرقه)، مودبانه بگو: «من دستیار اختصاصی درس علوم نهم هستم و فقط می‌تونم در زمینه مباحث این کتاب بهت کمک کنم. لطفاً یک سوال از علوم نهم بپرس!»
-۳. تمام پاسخ‌ها باید کاملاً دقیق، مستند به کتاب درسی نهم، واضح و با لحن '${assistantTone}' باشد.
+۲. اگر کاربر سوالی غیرمرتبط با علوم تجربی نهم یا مدرسه پرسید (مسائل سیاسی، ورزشی، سرگرمی، کدنویسی، برنامه‌های کامپیوتری و موضوعات متفرقه)، مودبانه بگو: «من دستیار اختصاصی درس علوم نهم هستم و فقط می‌تونم در زمینه مباحث این کتاب بهت کمک کنم. لطفاً یک سوال از درس علوم نهم بپرس!»
+۳. تمام پاسخ‌ها باید کاملاً علمی، دقیق، مطابق با کتاب علوم تجربی نهم و با لحن '${assistantTone}' باشد.
 
-گنجینه محتوای ۱۵ فصل کتاب علوم نهم:
+گنجینه محتوای درسی ۱۵ فصل علوم نهم:
 ${SCIENCE_KNOWLEDGE_BASE}
 `;
 
@@ -577,14 +590,13 @@ ${SCIENCE_KNOWLEDGE_BASE}
 
         if (data.choices && data.choices[0] && data.choices[0].message) {
           const botReply = data.choices[0].message.content;
-          const matchedImage = findRelevantImage(query, botReply);
-          typeAssistantResponse(botReply, matchedImage);
+          typeAssistantResponse(botReply);
         } else {
-          appendMessage('assistant', 'متأسفانه پاسخی دریافت نشد. لطفاً مجدد امتحان کنید.');
+          appendMessage('assistant', 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.');
         }
       } catch (err) {
         document.getElementById(loadingId)?.remove();
-        appendMessage('assistant', 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را چک کنید.');
+        appendMessage('assistant', 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.');
       }
     }
   </script>
